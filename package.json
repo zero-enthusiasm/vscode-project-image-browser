@@ -1,0 +1,78 @@
+{
+    "name": "vscode-project-image-browser",
+    "displayName": "vscode-project-image-browser",
+    "description": "An extension for browsing all the images in your current project with directory grouping, filtering and other options.",
+    "publisher": "baboonanza",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.75.0"
+    },
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "vscode-project-image-browser.viewImages",
+                "title": "View Project Images"
+            }
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "when": "editorFocus",
+                    "command": "vscode-project-image-browser.viewImages",
+                    "group": "z_commands"
+                }
+            ],
+            "explorer/context": [
+                {
+                    "command": "vscode-project-image-browser.viewImages",
+                    "group": "z_commands"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "Project Image Browser",
+            "properties": {
+                "vscode-project-image-browser.includeFolders": {
+                    "default": "",
+                    "type": "string",
+                    "description": "Only these folders will be searched. Wildcards NOT supported."
+                },
+                "vscode-project-image-browser.includeProjectFolders": {
+                    "default": "",
+                    "type": "object",
+                    "description": "Only these project folders will be included in the search. Wildcards NOT supported."
+                },
+                "vscode-project-image-browser.excludeFolders": {
+                    "default": "node_modules",
+                    "type": "string",
+                    "description": "These folders will be ignored. Wildcards NOT supported."
+                },
+                "vscode-project-image-browser.imageBackground": {
+                    "default": "transparent",
+                    "type": "string",
+                    "description": "Color/pattern displayed behind images."
+                },
+                "vscode-project-image-browser.imageSize": {
+                    "default": 100,
+                    "type": "number",
+                    "description": "Size of each image in the browser, in pixels."
+                }
+            }
+        }
+    },
+    "scripts": {
+        "install:all": "npm install && cd webview-ui && npm install",
+        "build:webview": "cd webview-ui && npm run build",
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/glob": "^7.1.3",
+        "@types/node": "^12.11.7",
+        "@types/vscode": "^1.46.0",
+        "glob": "^7.1.6",
+        "typescript": "^4.1.3"
+    }
+}
