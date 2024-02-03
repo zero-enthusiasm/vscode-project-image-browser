@@ -57,6 +57,11 @@
                     "default": 100,
                     "type": "number",
                     "description": "Size of each image in the browser, in pixels."
+                },
+                "vscode-project-image-browser.lazyLoading": {
+                    "default": true,
+                    "type": "boolean",
+                    "description": "Only loaad images when scrolled into view. "
                 }
             }
         }

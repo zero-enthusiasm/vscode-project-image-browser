@@ -1,5 +1,5 @@
 import { onMount, type Component, onCleanup, createSignal, createEffect, For, Accessor, Setter, Show, PropsWithChildren, createMemo } from "solid-js";
-import { provideVSCodeDesignSystem, vsCodeBadge, vsCodeButton, vsCodeCheckbox, vsCodeOption, vsCodeTag, vsCodeTextArea, vsCodeTextField } from "@vscode/webview-ui-toolkit";
+import { provideVSCodeDesignSystem, vsCodeBadge, vsCodeButton, vsCodeCheckbox, vsCodeDivider, vsCodeOption, vsCodeTextArea, vsCodeTextField } from "@vscode/webview-ui-toolkit";
 import { vscode } from "./utilities/vscode";
 import "./App.css";
 import * as protocol from "../../src/protocol";
@@ -11,8 +11,10 @@ provideVSCodeDesignSystem().register(
     vsCodeCheckbox(),
     vsCodeTextArea(),
     vsCodeBadge(),
+    vsCodeDivider(),
 );
 
+// Types for expandable/collapsable group data
 type Expandable = {
     title: string;
     expanded: Accessor<boolean>;
@@ -38,7 +40,6 @@ const imagebackgroundStyles = [
     'grey',
     '#CCCCCC'
 ];
-export const CheckboardSVG = "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4NCjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iNTAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDUgNSI+DQogICAgPHBhdGggZD0iTTAsMFY1SDFWMHpNMiwwVjVIM1Ywek00LDBWNUg1VjB6TTAsMEg1VjFIMHpNMCwySDVWM0gwek0wLDRINVY1SDB6IiBmaWxsPSIjQ0NDQ0NDIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIC8+DQo8L3N2Zz4=";
 
 /*----------------------------------------------------------------------------------------------------------------------
     Main component for image browser
@@ -47,13 +48,16 @@ export const CheckboardSVG = "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4w
 const App: Component = () => {
     let config = {} as protocol.Configuration;
 
+    // Image data
     const [imageGroups, setImageGroups] = createSignal([] as ProjectDirImageGroups[]);
+    // Config setting displayed on the main 
     const [imageBackground, setImageBackground] = createSignal("transparent");
     const [imageSize, setImageSize] = createSignal(100);
-
-    const [filter, setFilter] = createSignal("");
     const [showBackgroundColorModal, setShowBackgroundColorModal] = createSignal(false);
     const [showSettingsModal, setShowSettingsModal] = createSignal(false);
+    // Other temporary states
+    const [filter, setFilter] = createSignal("");
+    const [viewImage, setViewImage] = createSignal<protocol.ImageFile | undefined>();
 
     onMount(() => {
         window.addEventListener("message", messageHandler);
@@ -62,6 +66,7 @@ const App: Component = () => {
         vscode.postMessage({ command: protocol.ClientCommand.InitComplete });
     });
 
+    // Handles incoming server messages
     const messageHandler = (ev: MessageEvent) => {
         const message = ev.data as protocol.Message;
         switch (message.command) {
@@ -74,7 +79,7 @@ const App: Component = () => {
         }
     }
 
-    // Comment!
+    // Converts the file list sent by the server into the structure we want to display by grouping images based on realtive path
     const processImageData = (imageFileLists: protocol.ImageFileList[]) => {
         const projectDirGroups: ProjectDirImageGroups[] = [];
 
@@ -109,12 +114,14 @@ const App: Component = () => {
         return projectDirGroups;
     }
 
+    // Applies a new config sent from the server
     const setConfig = (newConfig: protocol.Configuration) => {
         config = newConfig;
         setImageBackground(config.imageBackground);
         setImageSize(config.imageSize);
     }
 
+    // Called to modify local config and update the server
     const changeConfig = (partialConfig: Partial<protocol.Configuration>) => {
         const newConfig = Object.assign({}, config, partialConfig);
         vscode.postMessage({ command: protocol.ClientCommand.PostConfig, data: newConfig });
@@ -124,7 +131,6 @@ const App: Component = () => {
     const expandAll = (expanded: boolean) => imageGroups().forEach(group => {
         group.setExpanded(expanded); group.groups.forEach(group => group.setExpanded(expanded))
     });
-
     const backgroundStyle = createMemo(() => imageBackground().split(';'));
 
     return (
@@ -157,6 +163,8 @@ const App: Component = () => {
                                     background={backgroundStyle()}
                                     imageSize={imageSize() + 'px'}
                                     filter={filter()}
+                                    loading={config.lazyLoading ? "lazy" : undefined}
+                                    onImageClick={setViewImage}
                                 />}
                             </For>
                         }>
@@ -167,6 +175,8 @@ const App: Component = () => {
                                     background={backgroundStyle()}
                                     imageSize={imageSize() + 'px'}
                                     filter={filter()}
+                                    loading={config.lazyLoading ? "lazy" : undefined}
+                                    onImageClick={setViewImage}
                                 />}
                             </For>
                         </Group>
@@ -190,6 +200,14 @@ const App: Component = () => {
 
             <Show when={showSettingsModal()}>
                 <SettingsPanel config={config} changeConfig={changeConfig} onCancel={() => setShowSettingsModal(false)} />
+            </Show>
+
+            <Show when={viewImage() != undefined}>
+                <ModalPanel modifiers='view-image' onbackgroundclick={() => setViewImage(undefined)}>
+                    <Background background={backgroundStyle()} modifiers="" size="100%">
+                        <img class="image" src={viewImage()!.uri}></img>
+                    </Background>
+                </ModalPanel>
             </Show>
         </main >
     );
@@ -228,6 +246,8 @@ type ImageGroupProps = {
     background: string[],
     imageSize: string,
     filter: string;
+    loading: "lazy" | undefined;
+    onImageClick: (image: protocol.ImageFile) => void;
 }
 
 const ImageGroup: Component<ImageGroupProps> = (props) => {
@@ -238,9 +258,9 @@ const ImageGroup: Component<ImageGroupProps> = (props) => {
             <div class="image-list">
                 <For each={filteredImages()}>
                     {(image, index) =>
-                        <div class={"image-box" + (index() == 0 ? " first" : "")}>
+                        <div class={"image-box" + (index() == 0 ? " first" : "")} onclick={() => props.onImageClick(image)}>
                             <Background background={props.background} modifiers="" size={props.imageSize}>
-                                <img class="image" src={image.uri}></img>
+                                <img class="image" src={image.uri} loading={props.loading}></img>
                             </Background>
                             <div class="image-name" style={{ width: props.imageSize }}>
                                 {image.name}
@@ -300,6 +320,7 @@ const SettingsPanel: Component<SettingsPanelProps> = (props) => {
     const [includeProjectFolders, setIncludeProjectFolders] = createSignal(props.config.includeProjectFolders);
     const [includeFolders, setIncludeFolders] = createSignal(props.config.includeFolders.join("\n"));
     const [excludeFolders, setExcludeFolders] = createSignal(props.config.excludeFolders.join("\n"));
+    const [lazyLoading, setLazyLoading] = createSignal(props.config.lazyLoading);
     const projectFolders = Object.keys(includeProjectFolders());
 
     const toggleProjectFolder = (folder: string) => {
@@ -318,6 +339,9 @@ const SettingsPanel: Component<SettingsPanelProps> = (props) => {
 
     return (
         <ModalPanel modifiers='settings'>
+            <vscode-checkbox checked={lazyLoading} onchange={() => setLazyLoading(!lazyLoading)}>
+                "Lazy image loading"
+            </vscode-checkbox>
             <Show when={projectFolders.length > 1}>
                 Included
                 <For each={projectFolders}>

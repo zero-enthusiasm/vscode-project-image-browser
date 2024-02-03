@@ -10,6 +10,7 @@ main {
     flex-direction: row;
     align-items: center;
     margin-top: 4px;
+    background-color: var(--vscode-toolbar-activeBackground);
 }
 
 .toolbar-spacer {
@@ -100,7 +101,7 @@ main {
 }
 
 .modal-background {
-    position: absolute;
+    position: fixed;
     left: 0;
     right: 0;
     top: 0;
@@ -134,6 +135,13 @@ main {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
+}
+
+.modal-panel.view-image {
+    position: fixed;
+    width: 60%;
+    aspect-ratio: 1/1;
+    padding: 20px;
 }
 
 .settings-folder-list {

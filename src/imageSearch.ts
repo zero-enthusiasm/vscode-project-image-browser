@@ -5,7 +5,8 @@ import { ImageFileList, ImageFile } from "./protocol";
 
 const SUPPORT_IMG_TYPES = ['.svg', '.png', '.jpeg', '.jpg', '.ico', '.gif', '.webp', '.bmp', '.tif', '.tiff', '.apng', '.avif']
 
-export function imageSearchMultipleFolders(folders: string[], includeFolders: string[], excludeFolders: string[], webview: Webview) {
+// Main search function used to collect all images in the given folders and form them into structured data while avoiding lengthy path repetition
+export function imageSearchMultipleFolders(folders: string[], includeFolders: string[], excludeFolders: string[], webview: Webview): ImageFileList[] {
     const lists: ImageFileList[] = [];
     for (const base of folders) {
         const imgs = imageSearchFolder(base, includeFolders, excludeFolders, webview);
@@ -18,11 +19,11 @@ export function imageSearchMultipleFolders(folders: string[], includeFolders: st
         const commonLength = getCommonBasePathLength(lists.map(item => item.base.split(path.sep)));
         lists.forEach(list => list.base = list.base.slice(commonLength));
     }
-
     return lists;
 }
 
-function getCommonBasePathLength(paths: string[][]) {
+// Find the number of starting characters shared between the given paths
+function getCommonBasePathLength(paths: string[][]): number {
     const minLength = paths.reduce((minLength, parts) => Math.min(parts.length, minLength), 32768) - 1;
     let i = 0;
     for (; i < minLength; ++i)
@@ -32,7 +33,8 @@ function getCommonBasePathLength(paths: string[][]) {
     return paths[0].slice(0, i).reduce((length, part) => length + part.length + 1, 0) - 1;
 }
 
-export function imageSearchFolder(basePath: string, includeFolders: string[], excludeFolders: string[], webview: Webview) {
+// Recursively search a folder for images and return structured data
+function imageSearchFolder(basePath: string, includeFolders: string[], excludeFolders: string[], webview: Webview): ImageFile[] {
     const images: ImageFile[] = []
     const searchPaths = includeFolders.length > 0 ? includeFolders.map(folder => path.join(basePath, trimSlashes(folder))) : [basePath];
     const excludePaths = excludeFolders.map(folder => path.join(basePath, trimSlashes(folder)))

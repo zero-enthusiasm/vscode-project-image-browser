@@ -21,6 +21,7 @@ export type Configuration = {
 
     imageBackground: string;
     imageSize: number;
+    lazyLoading: boolean;
 }
 
 export type ImageFile = {

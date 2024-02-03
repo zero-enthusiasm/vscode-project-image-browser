@@ -8,7 +8,7 @@ import { EXTENSION_ID } from '../extension';
 type MessageHandler = (message: protocol.Message) => void;
 
 /**
- * This class manages the state and behavior of ImageViewer webview panel.
+ * This class manages the state and behavior of the webview panel.
  */
 export class ImageBrowserPanel {
     public static _singleton: ImageBrowserPanel | undefined;
@@ -42,6 +42,7 @@ export class ImageBrowserPanel {
             includeProjectFolders: defaultGet("includeProjectFolders", {}),
             imageBackground: defaultGet("imageBackground", "transparent"),
             imageSize: defaultGet("imageSize", 100),
+            lazyLoading: true,
         };
     }
 
@@ -62,14 +63,12 @@ export class ImageBrowserPanel {
         this._disposables.length = 0;
     }
 
-    /**
-    */
+    // Send the server config to the client
     private _sendConfig = () => {
         this._panel.webview.postMessage({ command: protocol.ServerCommand.PostConfig, data: this._config } as protocol.Message);
     }
 
-    /**
-    */
+    // Recieve a new config from the client
     private _receieveConfig = (message: protocol.Message) => {
         Object.assign(this._config, message.data);
 
@@ -83,9 +82,7 @@ export class ImageBrowserPanel {
         this._sendImageData();
     }
 
-    /**
-    * Searches for images in the project and sends the paths to the webview
-    */
+    // Searches for images in the project and sends the paths to the webview
     private _sendImageData = () => {
         const webview = this._panel.webview;
         const includeProjectFolders = this._config.includeProjectFolders;
@@ -116,9 +113,7 @@ export class ImageBrowserPanel {
         `;
     }
 
-    /**
-    * reads the config file and preprocesses it to ensure the contents are valid against current workspace
-    */
+    // Reads the config file and preprocesses it to ensure the contents are valid against the current workspace
     private _validateConfig() {
         const config = this._config;
         const projectPaths = getAllProjectPaths();
