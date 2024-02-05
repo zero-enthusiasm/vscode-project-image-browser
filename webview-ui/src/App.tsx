@@ -320,7 +320,6 @@ const SettingsPanel: Component<SettingsPanelProps> = (props) => {
     const [includeProjectFolders, setIncludeProjectFolders] = createSignal(props.config.includeProjectFolders);
     const [includeFolders, setIncludeFolders] = createSignal(props.config.includeFolders.join("\n"));
     const [excludeFolders, setExcludeFolders] = createSignal(props.config.excludeFolders.join("\n"));
-    const [lazyLoading, setLazyLoading] = createSignal(props.config.lazyLoading);
     const projectFolders = Object.keys(includeProjectFolders());
 
     const toggleProjectFolder = (folder: string) => {
@@ -339,9 +338,6 @@ const SettingsPanel: Component<SettingsPanelProps> = (props) => {
 
     return (
         <ModalPanel modifiers='settings'>
-            <vscode-checkbox checked={lazyLoading} onchange={() => setLazyLoading(!lazyLoading)}>
-                "Lazy image loading"
-            </vscode-checkbox>
             <Show when={projectFolders.length > 1}>
                 Included
                 <For each={projectFolders}>

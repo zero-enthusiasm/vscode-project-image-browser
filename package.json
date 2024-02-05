@@ -2,10 +2,14 @@
     "name": "vscode-project-image-browser",
     "displayName": "vscode-project-image-browser",
     "description": "An extension for browsing all the images in your current project with directory grouping, filtering and other options.",
-    "publisher": "baboonanza",
+    "publisher": "zero-enthusiasm",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/zero-enthusiasm/vscode-project-image-browser.git"
+    },
     "version": "0.0.1",
     "engines": {
-        "vscode": "^1.75.0"
+        "vscode": "^1.51.0"
     },
     "main": "./out/extension.js",
     "contributes": {

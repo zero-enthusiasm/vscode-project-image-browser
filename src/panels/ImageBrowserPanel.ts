@@ -70,7 +70,13 @@ export class ImageBrowserPanel {
 
     // Recieve a new config from the client
     private _receieveConfig = (message: protocol.Message) => {
-        Object.assign(this._config, message.data);
+        const newConfig = message.data as protocol.Configuration;
+
+        const filterChanged = this._config.includeFolders.join() != newConfig.includeFolders.join()
+            || this._config.excludeFolders.join() != newConfig.excludeFolders.join()
+            || !!Object.keys(newConfig.includeProjectFolders).find(key => this._config.includeProjectFolders[key] != newConfig.includeProjectFolders[key]);
+
+        Object.assign(this._config, newConfig);
 
         const configuration = workspace.getConfiguration(EXTENSION_ID);
         configuration.update("includeFolders", this._config.includeFolders.join(';'));
@@ -79,7 +85,8 @@ export class ImageBrowserPanel {
         configuration.update("imageBackground", this._config.imageBackground);
         configuration.update("imageSize", this._config.imageSize);
 
-        this._sendImageData();
+        if (filterChanged)
+            this._sendImageData();
     }
 
     // Searches for images in the project and sends the paths to the webview

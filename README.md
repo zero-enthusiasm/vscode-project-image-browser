@@ -1,25 +1,27 @@
-# Hello World (SolidJS)
+# Project Image Browser
 
-This is an implementation of the default [Hello World](https://github.com/microsoft/vscode-webview-ui-toolkit-samples/tree/main/default/hello-world) sample extension that demonstrates how to set up and use a [SolidJS](https://www.solidjs.com/) + [Webview UI Toolkit](https://github.com/microsoft/vscode-webview-ui-toolkit) webview extension.
+This is a VSCode extension that allows you to view all of the images in your project collated into a single webview. The webview can be opened using a context menu in explorer pane.
 
-![A screenshot of the sample extension.](./assets/hello-world.png)
+Inspired by [Image Viewer](https://github.com/ZhangJian1713/vscode-image-viewer) but entirely rewritten to simplify the implementation of new features and allow VSCode theming of the webview.
 
-## Documentation
+Features:
+- Support for workspaces with multiple root folders, including selectively including/excluding them.
+- Webview matches VSCode theming
+- Multiple backgrounds available for images, including checkboards. More added on request.
+- Image name filtering
+- Basic include/exclude filters (regex filtering tbd)
 
-For a deeper dive into how this sample works, read the guides below.
+Most, but not quite all, configuration can be altered from within the webview. 
 
-- [Extension structure](./docs/extension-structure.md)
-- [Extension commands](./docs/extension-commands.md)
-- [Extension development cycle](./docs/extension-development-cycle.md)
+![A screenshot of the sample extension.](./assets/extension-overview.png)
 
-## Run The Sample
+## Development
 
+The code is based on the [Hello World](https://github.com/microsoft/vscode-webview-ui-toolkit-samples/tree/main/default/hello-world) sample extension that demonstrates how to set up and use a [SolidJS](https://www.solidjs.com/) + [Webview UI Toolkit](https://github.com/microsoft/vscode-webview-ui-toolkit) webview extension.
+
+Once you've pulled the repo you need to install dependencies.
 ```bash
-# Copy sample extension locally
-npx degit microsoft/vscode-webview-ui-toolkit-samples/frameworks/vscode-project-image-browser hello-world
-
-# Navigate into sample directory
-cd hello-world
+# Navigate to project folder
 
 # Install dependencies for both the extension and webview UI source code
 npm run install:all
@@ -27,11 +29,7 @@ npm run install:all
 # Build webview UI source code
 npm run build:webview
 
-# Open sample in VS Code
+# Open project in VS Code
 code .
 ```
-
-Once the sample is open inside VS Code you can run the extension by doing the following:
-
-1. Press `F5` to open a new Extension Development Host window
-2. Inside the host window, open the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac) and type `Hello World (SolidJS): Show`
+Note that when you change the webview you must rebuild it using the NPM script (bottom of explorer window) or the command above.
