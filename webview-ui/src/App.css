@@ -1,4 +1,5 @@
 main {
+    position: relative;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -23,6 +24,7 @@ main {
 }
 
 .filter-text {
+    margin-left: 10px;
     margin-right: 10px;
 }
 
@@ -48,8 +50,8 @@ main {
 }
 
 .group-title.project-dir {
-    font-weight: bold;
-    font-size: 1.2em;
+    font-size: 1.4em;
+    font-style: italic;
 }
 
 .group-expander {
@@ -94,15 +96,14 @@ main {
 }
 
 .checkerboard {
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center;
-    background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4NCjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iNTAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDUgNSI+DQogICAgPHBhdGggZD0iTTAsMFY1SDFWMHpNMiwwVjVIM1Ywek00LDBWNUg1VjB6TTAsMEg1VjFIMHpNMCwySDVWM0gwek0wLDRINVY1SDB6IiBmaWxsPSIjQ0NDQ0NDIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIC8+DQo8L3N2Zz4=');
+    background-repeat: repeat;
+    background-size: 50%;
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MDAiIGhlaWdodD0iNTAwIiB2aWV3Qm94PSIwIDAgNCA0Ij4KICAgIDxwYXRoIGQ9Ik0wLDBWNEgxVjB6TTIsMFY0SDNWMHpNNCwwVjRINFYwek0wLDBINFYxSDB6TTAsMkg0VjNIMHpNMCw0SDRWNEgweiIgZmlsbD0iI0NDQ0NDQyIgZmlsbC1ydWxlPSJldmVub2RkIiAvPgo8L3N2Zz4=');
 }
 
 .modal-background {
     position: fixed;
-    left: 0;
+    left: 0 !important;
     right: 0;
     top: 0;
     bottom: 0;
@@ -117,17 +118,17 @@ main {
 .modal-panel {
     background-color: var(--vscode-panel-background);
     padding: 8px;
+    border-width: 1px;
+    border-color: var(--vscode-panel-border);
+    border-radius: 4px;
+    border-style: solid;
+    filter: drop-shadow(rgba(0, 0, 0, 0.5) -4px -4px 4px) drop-shadow(rgba(0, 0, 0, 0.5) 4px 4px 4px);
 }
 
 .modal-panel.settings {
     min-width: 300px;
     display: flex;
     flex-direction: column;
-    border-width: 1px;
-    border-color: var(--vscode-panel-border);
-    border-radius: 4px;
-    border-style: solid;
-    filter: drop-shadow(rgba(0, 0, 0, 0.5) -4px -4px 4px) drop-shadow(rgba(0, 0, 0, 0.5) 4px 4px 4px);
 }
 
 .modal-panel.backgroundColor {
@@ -139,9 +140,15 @@ main {
 
 .modal-panel.view-image {
     position: fixed;
-    width: 60%;
-    aspect-ratio: 1/1;
     padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center
+}
+
+.view-image-buttons {
+    display: flex;
+    flex-direction: row;
 }
 
 .settings-folder-list {
