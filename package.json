@@ -15,22 +15,51 @@
     "contributes": {
         "commands": [
             {
-                "command": "vscode-project-image-browser.viewImages",
+                "command": "vscode-project-image-browser.ViewImages",
                 "title": "View Project Images"
+            },
+            {
+                "command": "vscode-project-image-browser.CopyName",
+                "title": "Copy Name"
+            },
+            {
+                "command": "vscode-project-image-browser.CopyRelativePath",
+                "title": "Copy Relative Path"
+            },
+            {
+                "command": "vscode-project-image-browser.CopyFullPath",
+                "title": "Copy Full Path"
             }
         ],
         "menus": {
             "editor/context": [
                 {
                     "when": "editorFocus",
-                    "command": "vscode-project-image-browser.viewImages",
+                    "command": "vscode-project-image-browser.ViewImages",
                     "group": "z_commands"
                 }
             ],
             "explorer/context": [
                 {
-                    "command": "vscode-project-image-browser.viewImages",
+                    "command": "vscode-project-image-browser.ViewImages",
                     "group": "z_commands"
+                }
+            ],
+            "webview/context": [
+                {
+                    "command": "vscode-project-image-browser.CopyName",
+                    "title": "Copy Name",
+                    "when": "webviewId == 'image-browser' && webviewSection == 'image'"
+                },
+                {
+                    "command": "vscode-project-image-browser.CopyRelativePath",
+                    "title": "Copy Relative Path",
+                    "when": "webviewId == 'image-browser' && webviewSection == 'image'"
+                },
+                {
+                    "command": "vscode-project-image-browser.CopyFullPath",
+                    "title": "Copy Full Path",
+                    "when": "webviewId == 'image-browser' && webviewSection == 'image'"
                 }
             ]
         },
@@ -43,14 +72,14 @@
                     "description": "Only these folders will be searched. Wildcards NOT supported."
                 },
                 "vscode-project-image-browser.includeProjectFolders": {
-                    "default": "",
+                    "default": {},
                     "type": "object",
-                    "description": "Only these project folders will be included in the search. Wildcards NOT supported."
+                    "description": "Folders that will be included in the search. Must be relative to a project folder. ; deliminated list."
                 },
                 "vscode-project-image-browser.excludeFolders": {
                     "default": "node_modules",
                     "type": "string",
-                    "description": "These folders will be ignored. Wildcards NOT supported."
+                    "description": "Folders that will be ignored when found at the end of a path."
                 },
                 "vscode-project-image-browser.imageBackground": {
                     "default": "transparent",
@@ -65,7 +94,35 @@
                 "vscode-project-image-browser.lazyLoading": {
                     "default": true,
                     "type": "boolean",
-                    "description": "Only loaad images when scrolled into view. "
+                    "description": "Only load images when scrolled into view."
+                },
+                "vscode-project-image-browser.viewColumn": {
+                    "default": "One",
+                    "type": "string",
+                    "enum": [
+                        "Active",
+                        "Beside",
+                        "One",
+                        "Two",
+                        "Three",
+                        "Four",
+                        "Five",
+                        "Six",
+                        "Seven",
+                        "Eight",
+                        "Nine"
+                    ],
+                    "description": "The column of the editor in which to open the browser."
+                },
+                "vscode-project-image-browser.pathDeliminator": {
+                    "default": "Default",
+                    "type": "string",
+                    "enum": [
+                        "Default",
+                        "/",
+                        "\\"
+                    ],
+                    "description": "The path deliminator used when displaying and copying paths to clipboard."
                 }
             }
         }
@@ -73,7 +130,7 @@
     "scripts": {
         "install:all": "npm install && cd webview-ui && npm install",
         "build:webview": "cd webview-ui && npm run build",
-        "vscode:prepublish": "npm run cyompile",
+        "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
         "package": "vsce package"

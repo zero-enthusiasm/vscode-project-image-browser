@@ -115,6 +115,10 @@ main {
     background-color: rgba(0, 0, 0, 0.2)
 }
 
+.modal-background.dark {
+    background-color: rgba(0, 0, 0, 0.2)
+}
+
 .modal-panel {
     background-color: var(--vscode-panel-background);
     padding: 8px;

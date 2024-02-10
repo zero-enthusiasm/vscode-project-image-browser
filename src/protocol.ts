@@ -2,6 +2,7 @@ export enum ClientCommand {
     InitComplete = 'init_complete',
     PostConfig = 'post_config',
     GetImageData = 'refresh_images',
+    copy_to_clipboard = 'copy_To_clipboard',
 }
 
 export enum ServerCommand {
@@ -33,4 +34,8 @@ export type ImageFile = {
 export type ImageFileList = {
     base: string; // Base path
     imgs: ImageFile[]; // List of images with path relative to base
+}
+
+export type MenuContext = {
+    imageUri: string;
 }

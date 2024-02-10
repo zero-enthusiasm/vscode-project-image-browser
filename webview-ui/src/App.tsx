@@ -54,12 +54,12 @@ const App: Component = () => {
     // Config setting displayed on the main 
     const [imageBackground, setImageBackground] = createSignal("transparent");
     const [imageSize, setImageSize] = createSignal(100);
-    const [showBackgroundColorModal, setShowBackgroundColorModal] = createSignal(false);
-    const [showSettingsModal, setShowSettingsModal] = createSignal(false);
 
     // Other temporary states
     const [filter, setFilter] = createSignal("");
     const [viewImage, setViewImage] = createSignal<protocol.ImageFile | undefined>();
+    const [showBackgroundColorModal, setShowBackgroundColorModal] = createSignal(false);
+    const [showSettingsModal, setShowSettingsModal] = createSignal(false);
 
     onMount(() => {
         window.addEventListener("message", messageHandler);
@@ -287,12 +287,16 @@ type ImageGroupProps = {
 const ImageGroup: Component<ImageGroupProps> = (props) => {
     const filteredImages = () => props.filter.length ? props.group.images.filter(image => image.name.includes(props.filter))
         : props.group.images;
+    const dataContext = '{"webviewSection": "image", "preventDefaultContextMenuItems": true, "imageUri": "';
     return (
         <Group group={props.group} modifiers="image-dir" count={filteredImages().length}>
             <div class="image-list">
                 <For each={filteredImages()}>
                     {(image, index) =>
-                        <div class={"image-box" + (index() == 0 ? " first" : "")} onclick={() => props.onImageClick(image)}>
+                        <div class={"image-box" + (index() == 0 ? " first" : "")}
+                            onclick={() => props.onImageClick(image)}
+                            data-vscode-context={dataContext + image.uri + '"}'}
+                        >
                             <Background background={props.background} modifiers="" size={props.imageSize}>
                                 <img class="image" src={image.uri} loading={props.loading}></img>
                             </Background>
@@ -332,7 +336,7 @@ const ModalPanel: Component<{ anchorId?: string, onbackgroundclick?: () => void,
     }
 
     return (
-        <div class="modal-background" onclick={props.onbackgroundclick}>
+        <div class="modal-background dark" onclick={props.onbackgroundclick}>
             <div class={"modal-panel " + props.modifiers} style={x && y ? { position: 'absolute', left: x + 'px', top: y + 'px' } : undefined}>
                 {props.children}
             </div>

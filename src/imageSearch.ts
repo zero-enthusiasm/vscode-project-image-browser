@@ -22,6 +22,17 @@ export function imageSearchMultipleFolders(folders: string[], includeFolders: st
     return lists;
 }
 
+export function overridePathDeliminators(lists: ImageFileList[], pathDeliminator: string) {
+    if (pathDeliminator != path.sep) {
+        const regex = `/${path.sep}/g`;
+        for (const projectDir of lists) {
+            projectDir.base.replace(regex, pathDeliminator);
+            for (const image of projectDir.imgs)
+                image.path.replace(regex, pathDeliminator)
+        }
+    }
+}
+
 // Find the number of starting characters shared between the given paths
 function getCommonBasePathLength(paths: string[][]): number {
     const minLength = paths.reduce((minLength, parts) => Math.min(parts.length, minLength), 32768) - 1;
@@ -36,9 +47,9 @@ function getCommonBasePathLength(paths: string[][]): number {
 // Recursively search a folder for images and return structured data
 function imageSearchFolder(basePath: string, includeFolders: string[], excludeFolders: string[], webview: Webview): ImageFile[] {
     const images: ImageFile[] = []
-    const searchPaths = includeFolders.length > 0 ? includeFolders.map(folder => path.join(basePath, trimSlashes(folder))) : [basePath];
-    const excludePaths = excludeFolders.map(folder => path.join(basePath, trimSlashes(folder)))
     const searchedFolders = new Set<string>();
+    const searchPaths = includeFolders.length > 0 ? includeFolders.map(folder => path.join(basePath, trimSlashes(folder))).filter(fs.existsSync)
+        : [basePath];
 
     try {
         while (searchPaths.length) {
@@ -48,7 +59,7 @@ function imageSearchFolder(basePath: string, includeFolders: string[], excludeFo
                 const fullPath = path.join(folder, name);
                 const stats = fs.statSync(fullPath)
                 if (stats.isDirectory()) {
-                    if (excludePaths.includes(fullPath))
+                    if (excludeFolders.find(s => fullPath.endsWith(s)))
                         continue;
                     if (searchedFolders.has(fullPath))
                         continue;
