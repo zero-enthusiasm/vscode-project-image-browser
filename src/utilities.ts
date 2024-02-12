@@ -1,4 +1,7 @@
-import { Uri, Webview, workspace } from "vscode";
+import * as vscode from "vscode";
+import * as path from 'path'
+import { execFile } from 'child_process';
+import * as os from 'os';
 
 /**
  * A helper function that returns a unique alphanumeric identifier called a nonce.
@@ -28,13 +31,30 @@ export function getNonce() {
  * @param pathList An array of strings representing the path to a file/resource
  * @returns A URI pointing to the file/resource
  */
-export function getUri(webview: Webview, extensionUri: Uri, pathList: string[]) {
-    return webview.asWebviewUri(Uri.joinPath(extensionUri, ...pathList));
+export function getUri(webview: vscode.Webview, extensionUri: vscode.Uri, pathList: string[]) {
+    return webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, ...pathList));
 }
 
 /**
  * get all project workspace folders
  */
 export function getAllProjectPaths() {
-    return workspace.workspaceFolders ? workspace.workspaceFolders.map(folder => folder.uri.fsPath) : [];
+    return vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders.map(folder => folder.uri.fsPath) : [];
 }
+
+/* tiny-open: https://github.com/fabiospampinato/tiny-open/tree/master */
+export function openInApp(path: string) {
+
+    if (process.platform === 'win32' || (process.platform === 'linux' && os.release().toLowerCase().includes('windows'))) {
+        execFile('cmd.exe', ['/c', 'start', '', path.replace(/[&^]/g, '^$&')]);
+    }
+    else if (process.platform === 'linux') {
+        execFile('xdg-open', [path]);
+    }
+    else if (process.platform === 'darwin') {
+        execFile('open', [path]);
+    }
+    else {
+        throw new Error(`Unsupported platform, could not open "${path}"`);
+    }
+};

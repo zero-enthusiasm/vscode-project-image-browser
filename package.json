@@ -29,6 +29,10 @@
             {
                 "command": "vscode-project-image-browser.CopyFullPath",
                 "title": "Copy Full Path"
+            },
+            {
+                "command": "vscode-project-image-browser.OpenImageFile",
+                "title": "Open in Default App"
             }
         ],
         "menus": {
@@ -48,18 +52,23 @@
             "webview/context": [
                 {
                     "command": "vscode-project-image-browser.CopyName",
-                    "title": "Copy Name",
-                    "when": "webviewId == 'image-browser' && webviewSection == 'image'"
+                    "when": "webviewId == 'image-browser' && webviewSection == 'image'",
+                    "group": "copy@1"
                 },
                 {
                     "command": "vscode-project-image-browser.CopyRelativePath",
-                    "title": "Copy Relative Path",
-                    "when": "webviewId == 'image-browser' && webviewSection == 'image'"
+                    "when": "webviewId == 'image-browser' && webviewSection == 'image'",
+                    "group": "copy@2"
                 },
                 {
                     "command": "vscode-project-image-browser.CopyFullPath",
-                    "title": "Copy Full Path",
-                    "when": "webviewId == 'image-browser' && webviewSection == 'image'"
+                    "when": "webviewId == 'image-browser' && webviewSection == 'image'",
+                    "group": "copy@3"
+                },
+                {
+                    "command": "vscode-project-image-browser.OpenImageFile",
+                    "when": "webviewId == 'image-browser' && webviewSection == 'image'",
+                    "group": "open@1"
                 }
             ]
         },
@@ -140,7 +149,8 @@
         "@types/node": "^12.11.7",
         "@types/vscode": "^1.46.0",
         "glob": "^7.1.6",
-        "typescript": "^4.1.3"
+        "typescript": "^4.1.3",
+        "open": "0.0.5"
     },
     "activationEvents": [
         "onCommand:vscode-project-image-browser.viewImages"

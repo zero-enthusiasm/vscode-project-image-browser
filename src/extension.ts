@@ -1,11 +1,18 @@
 import * as vscode from "vscode";
-import * as path from 'path'
-
+import * as path from "path"
 import { ImageBrowserPanel } from "./panels/ImageBrowserPanel";
 import { MenuContext } from "./protocol";
+import { openInApp } from "./utilities";
 
 
 export const EXTENSION_ID = "vscode-project-image-browser";
+
+// Join path parts while replacing separator with configured one if necessary
+function joinPath(...paths: string[]) {
+    const sep = vscode.workspace.getConfiguration(EXTENSION_ID).get("pathDeliminator", "Default");
+    const fullPath = path.join(...paths);
+    return sep == "Default" ? fullPath : fullPath.replace(new RegExp('\\' + path.sep, 'g'), sep);
+}
 
 export function activate(context: vscode.ExtensionContext) {
     // Show the webview
@@ -29,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
         if (ImageBrowserPanel.instance) {
             const result = ImageBrowserPanel.instance.findImageFromUri(context.imageUri);
             if (result)
-                vscode.env.clipboard.writeText(path.join(result.image.path, result.image.name));
+                vscode.env.clipboard.writeText(joinPath(result.image.path, result.image.name));
         }
     });
     context.subscriptions.push(copyRelativePath);
@@ -39,9 +46,18 @@ export function activate(context: vscode.ExtensionContext) {
         if (ImageBrowserPanel.instance) {
             const result = ImageBrowserPanel.instance.findImageFromUri(context.imageUri);
             if (result)
-                vscode.env.clipboard.writeText(path.join(result.folder.base, result.image.path, result.image.name));
+                vscode.env.clipboard.writeText(joinPath(result.projectDir, result.image.path, result.image.name));
         }
     });
     context.subscriptions.push(copyFullPath);
-    // Add command to the extension context
+
+    // Context menu: open image file in default app
+    const openImageFile = vscode.commands.registerCommand(EXTENSION_ID + ".OpenImageFile", (context: MenuContext) => {
+        if (ImageBrowserPanel.instance) {
+            const result = ImageBrowserPanel.instance.findImageFromUri(context.imageUri);
+            if (result)
+                openInApp(joinPath(result.projectDir, result.image.path, result.image.name))
+        }
+    });
+    context.subscriptions.push(openImageFile);
 }

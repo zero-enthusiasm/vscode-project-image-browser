@@ -3,6 +3,7 @@ import { provideVSCodeDesignSystem, vsCodeBadge, vsCodeButton, vsCodeCheckbox, v
 import { vscode } from "./utilities/vscode";
 import "./App.css";
 import * as protocol from "../../src/protocol";
+import { getCommonBasePathLength } from "../../src/common";
 
 provideVSCodeDesignSystem().register(
     vsCodeButton(),
@@ -25,9 +26,15 @@ type ImageGroup = Expandable & {
     images: protocol.ImageFile[];
 }
 
-type ProjectDirImageGroups = Expandable & {
+type ProjectDirGroups = Expandable & {
     groups: ImageGroup[];
 }
+
+type SavedState = {
+    expansions: { [key: string]: boolean },
+    filter: string
+}
+const defaultState: SavedState = { expansions: {}, filter: '' };
 
 // Available background style for images. The format is [color];[classes]. Color can be any valid CSS color.
 const imagebackgroundStyles = [
@@ -41,6 +48,8 @@ const imagebackgroundStyles = [
     '#CCCCCC'
 ];
 
+const imageDataContext = (uri: string) => '{"webviewSection": "image", "imageUri": "' + uri + '"}';
+
 /*----------------------------------------------------------------------------------------------------------------------
     Main component for image browser
 ----------------------------------------------------------------------------------------------------------------------*/
@@ -49,14 +58,14 @@ const App: Component = () => {
     let config = {} as protocol.Configuration;
 
     // Image data
-    const [imageGroups, setImageGroups] = createSignal([] as ProjectDirImageGroups[]);
+    const [imageGroups, setImageGroups] = createSignal([] as ProjectDirGroups[]);
 
     // Config setting displayed on the main 
     const [imageBackground, setImageBackground] = createSignal("transparent");
     const [imageSize, setImageSize] = createSignal(100);
 
     // Other temporary states
-    const [filter, setFilter] = createSignal("");
+    const [filter, setFilter] = createSignal(vscode.getState(defaultState).filter);
     const [viewImage, setViewImage] = createSignal<protocol.ImageFile | undefined>();
     const [showBackgroundColorModal, setShowBackgroundColorModal] = createSignal(false);
     const [showSettingsModal, setShowSettingsModal] = createSignal(false);
@@ -66,7 +75,7 @@ const App: Component = () => {
         onCleanup(() => window.addEventListener("message", messageHandler));
 
         // Reload state. We will refresh the image list anyway but this preserves the group expansion state
-        //setImageGroups(vscode.getState() as ProjectDirImageGroups[] || []);
+        //setImageGroups(vscode.getState() as ProjectDirGroups[] || []);
 
         vscode.postMessage({ command: protocol.ClientCommand.InitComplete });
     });
@@ -76,29 +85,39 @@ const App: Component = () => {
         const message = ev.data as protocol.Message;
         switch (message.command) {
             case protocol.ServerCommand.PostConfig:
-                setConfig(message.data);
+                setConfig(message.data as protocol.Configuration);
                 break;
             case protocol.ServerCommand.PostImageData:
-                setImageGroups(processImageData(message.data))
+                if (imageGroups().length)
+                    saveState();
+                setImageGroups(processImageData(message.data as protocol.ProjectDirCollection))
                 break;
+        }
+    };
+
+    const setExpansionState = (key: string, value: boolean) => {
+        const state = vscode.getState(defaultState);
+        if (state.expansions[key] != value && (value == false || state.expansions[key] != undefined)) {
+            state.expansions[key] = value;
+            vscode.setState(state);
         }
     }
 
     // Converts the file list sent by the server into the structure we want to display by grouping images based on realtive path
-    const processImageData = (imageFileLists: protocol.ImageFileList[]) => {
-        const projectDirGroups: ProjectDirImageGroups[] = [];
-        const createOrCopySignal = (group: Expandable | undefined) => group ? [group.expanded, group.setExpanded] : createSignal(true);
+    const processImageData = (ProjectDirs: protocol.ProjectDirCollection) => {
+        const projectDirGroups: ProjectDirGroups[] = [];
+        const state = vscode.getState(defaultState);
 
-        for (const imageFileList of imageFileLists) {
+        for (const ProjectDir of ProjectDirs.dirs) {
             let previous = "$*";
             let group: ImageGroup | undefined;
 
-            // Check is we were displaying this group before and copy the expansion signal to preserve state
-            const existingProjectDir = imageGroups().find(group => imageFileList.base == group.title);
-            const [expanded, setExpanded] = createOrCopySignal(existingProjectDir) as Signal<boolean>;
-            projectDirGroups.push({ title: imageFileList.base, groups: [], expanded, setExpanded });
+            const title = ProjectDir.base;
+            const [expanded, setExpanded] = createSignal(state.expansions[title] ?? true);
+            createEffect(() => setExpansionState(title, expanded()));
+            projectDirGroups.push({ title, groups: [], expanded, setExpanded });
 
-            for (const imageFile of imageFileList.imgs) {
+            for (const imageFile of ProjectDir.imgs) {
                 if (imageFile.path === previous) {
                     group!.images.push(imageFile);
                 }
@@ -106,8 +125,10 @@ const App: Component = () => {
                     if (group)
                         projectDirGroups[projectDirGroups.length - 1]!.groups.push(group);
 
-                    const existingGroup = existingProjectDir?.groups.find(group => imageFile.path == group.title);
-                    const [expanded, setExpanded] = createOrCopySignal(existingGroup) as Signal<boolean>;
+                    const expansionKey = title + imageFile.path;
+                    const [expanded, setExpanded] = createSignal(state.expansions[expansionKey] ?? true);
+                    createEffect(() => setExpansionState(expansionKey, expanded()));
+
                     group = {
                         title: imageFile.path,
                         images: [imageFile],
@@ -121,31 +142,44 @@ const App: Component = () => {
                 projectDirGroups[projectDirGroups.length - 1]!.groups.push(group);
         }
 
-        vscode.setState({ projectDirGroups });
-
         return projectDirGroups;
-    }
+    };
 
     // Applies a new config sent from the server
     const setConfig = (newConfig: protocol.Configuration) => {
         config = newConfig;
         setImageBackground(config.imageBackground);
         setImageSize(config.imageSize);
-    }
+    };
 
     // Called to modify local config and update the server
     const onChangeConfig = (partialConfig: Partial<protocol.Configuration>) => {
         const newConfig = Object.assign({}, config, partialConfig);
         vscode.postMessage({ command: protocol.ClientCommand.PostConfig, data: newConfig });
         setConfig(newConfig);
-    }
+    };
 
     // Update the VSCode state to record group expansions
-    const saveState = () => vscode.setState(imageGroups());
+    const saveState = () => {
+        const expansions: { [key: string]: boolean } = {}
+        imageGroups().forEach(dir => dir.groups.forEach(group => expansions[dir.title + group.title] = group.expanded()))
+        vscode.setState({
+            filter: filter(),
+            expansions
+        });
+    };
+    createEffect(() => {
+        const state = vscode.getState(defaultState);
+        if (state.filter != filter()) {
+            state.filter = filter();
+            vscode.setState(state);
+        }
+    });
 
     // Set expansion for all groups
     const onExpandAll = (expanded: boolean) => imageGroups().forEach(group => {
-        group.setExpanded(expanded); group.groups.forEach(group => group.setExpanded(expanded));
+        group.setExpanded(expanded);
+        group.groups.forEach(group => group.setExpanded(expanded));
     });
 
     // Backgrounds style for image list
@@ -165,10 +199,11 @@ const App: Component = () => {
     const getViewImageSize = () => {
         const dim = Math.max(document.documentElement.clientWidth, document.documentElement.clientHeight);
         return (dim * 0.7) + 'px';
-    }
+    };
 
+    const context = "{&quot;preventDefaultContextMenuItems&quot;: true}";
     return (
-        <main>
+        <main data-vscode-context={context}>
             <div class="toolbar">
                 <vscode-button class="toolbar-expand-button group-expander" appearance="secondary" onclick={() => onExpandAll(true)}>
                     +
@@ -228,19 +263,10 @@ const App: Component = () => {
             <Show when={viewImage() != undefined}>
                 <ModalPanel modifiers="view-image" onbackgroundclick={() => setViewImage(undefined)}>
                     <Background background={backgroundStyle()} modifiers="view-image" size={getViewImageSize()}>
-                        <img class="image" src={viewImage()!.uri}></img>
+                        <img class="image" src={viewImage()!.uri}
+                            data-vscode-context={imageDataContext(viewImage()!.uri)}
+                        ></img>
                     </Background>
-                    {/* <div class="view-image-buttons">
-                        <vscode-button appearance="secondary">
-                            Copy Name
-                        </vscode-button>
-                        <vscode-button appearance="secondary" class="margin-left">
-                            Copy Path
-                        </vscode-button>
-                        <vscode-button appearance="secondary" class="margin-left">
-                            Copy Path
-                        </vscode-button>
-                    </div> */}
                 </ModalPanel>
             </Show>
         </main >
@@ -285,29 +311,30 @@ type ImageGroupProps = {
 }
 
 const ImageGroup: Component<ImageGroupProps> = (props) => {
-    const filteredImages = () => props.filter.length ? props.group.images.filter(image => image.name.includes(props.filter))
-        : props.group.images;
-    const dataContext = '{"webviewSection": "image", "preventDefaultContextMenuItems": true, "imageUri": "';
+    const filteredImages = createMemo(() => props.filter.length ? props.group.images.filter(image => image.name.includes(props.filter))
+        : props.group.images);
     return (
-        <Group group={props.group} modifiers="image-dir" count={filteredImages().length}>
-            <div class="image-list">
-                <For each={filteredImages()}>
-                    {(image, index) =>
-                        <div class={"image-box" + (index() == 0 ? " first" : "")}
-                            onclick={() => props.onImageClick(image)}
-                            data-vscode-context={dataContext + image.uri + '"}'}
-                        >
-                            <Background background={props.background} modifiers="" size={props.imageSize}>
-                                <img class="image" src={image.uri} loading={props.loading}></img>
-                            </Background>
-                            <div class="image-name" style={{ width: props.imageSize }}>
-                                {image.name}
+        <Show when={filteredImages().length > 0}>
+            <Group group={props.group} count={filteredImages().length} modifiers=''>
+                <div class="image-list">
+                    <For each={filteredImages()}>
+                        {(image, index) =>
+                            <div class={"image-box" + (index() == 0 ? " first" : "")}
+                                onclick={() => props.onImageClick(image)}
+                                data-vscode-context={imageDataContext(image.uri)}
+                            >
+                                <Background background={props.background} modifiers="" size={props.imageSize}>
+                                    <img class="image" src={image.uri} loading={props.loading}></img>
+                                </Background>
+                                <div class="image-name" style={{ width: props.imageSize }}>
+                                    {image.name}
+                                </div>
                             </div>
-                        </div>
-                    }
-                </For>
-            </div >
-        </Group >
+                        }
+                    </For>
+                </div>
+            </Group >
+        </Show>
     );
 }
 
@@ -358,7 +385,8 @@ const SettingsPanel: Component<SettingsPanelProps> = (props) => {
     const [includeProjectFolders, setIncludeProjectFolders] = createSignal(props.config.includeProjectFolders);
     const [includeFolders, setIncludeFolders] = createSignal(props.config.includeFolders.join("\n"));
     const [excludeFolders, setExcludeFolders] = createSignal(props.config.excludeFolders.join("\n"));
-    const projectFolders = Object.keys(includeProjectFolders());
+    let projectFolders = Object.keys(includeProjectFolders());
+    const commonPathLength = getCommonBasePathLength(projectFolders);
 
     const toggleProjectFolder = (folder: string) => {
         const folders = Object.assign({}, includeProjectFolders());
@@ -381,7 +409,7 @@ const SettingsPanel: Component<SettingsPanelProps> = (props) => {
                 <For each={projectFolders}>
                     {folder =>
                         <vscode-checkbox checked={includeProjectFolders()[folder]} onchange={() => toggleProjectFolder(folder)}>
-                            {folder}
+                            {folder.slice(commonPathLength)}
                         </vscode-checkbox>
                     }
                 </For>

@@ -12,7 +12,7 @@ export enum ServerCommand {
 
 export type Message = {
     command: ServerCommand | ClientCommand;
-    data: any;
+    data: Configuration | ProjectDirCollection | MenuContext;
 }
 
 export type Configuration = {
@@ -25,15 +25,23 @@ export type Configuration = {
     lazyLoading: boolean;
 }
 
+// Single image item
 export type ImageFile = {
     name: string; // Filename with extension
     path: string; // Filesystem path relative to project folder
     uri: string; // Uri to image for webview
 }
 
-export type ImageFileList = {
+// Collection of images in a single workspace folder
+export type ProjectDir = {
     base: string; // Base path
     imgs: ImageFile[]; // List of images with path relative to base
+}
+
+// All images in all workspace folders - this is the type of the image data payload
+export type ProjectDirCollection = {
+    commonBase: string; // Base path
+    dirs: ProjectDir[]; // List of images with path relative to base
 }
 
 export type MenuContext = {

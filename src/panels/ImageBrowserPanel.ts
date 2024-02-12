@@ -1,8 +1,8 @@
 import * as protocol from "../protocol";
 import * as vscode from "vscode";
-import { getUri, getAllProjectPaths } from "../utilities";
-import { imageSearchMultipleFolders, overridePathDeliminators } from '../imageSearch';
+import { imageSearchMultipleFolders } from '../imageSearch';
 import { EXTENSION_ID } from '../extension';
+import * as path from 'path'
 
 type MessageHandler = (message: protocol.Message) => void;
 
@@ -16,26 +16,21 @@ export class ImageBrowserPanel {
     private readonly _disposables: vscode.Disposable[] = [];
     private readonly _messageHandlers: { [key: string]: MessageHandler; };
     private readonly _config: protocol.Configuration;
-    private readonly _pathDeliminator?: string;
 
-    private _results: protocol.ImageFileList[] = [];
+    private _results: protocol.ProjectDirCollection = { commonBase: '', dirs: [] };
 
     private constructor(extensionUri: vscode.Uri) {
         // Init extension config
         const configuration = vscode.workspace.getConfiguration(EXTENSION_ID);
-        const defaultGet = (key: string, defaultValue: any) => (configuration.has(key) ? configuration.get(key) : undefined)
-            || defaultValue;
         this._config = {
-            includeFolders: defaultGet("includeFolders", "").split(';'),
-            excludeFolders: defaultGet("excludeFolders", "node_modules").split(';'),
-            includeProjectFolders: defaultGet("includeProjectFolders", {}),
-            imageBackground: defaultGet("imageBackground", "transparent"),
-            imageSize: defaultGet("imageSize", 100),
-            lazyLoading: defaultGet("lazyLoading", true),
+            includeFolders: configuration.get("includeFolders", "").split(';'),
+            excludeFolders: configuration.get("excludeFolders", "node_modules").split(';'),
+            includeProjectFolders: configuration.get("includeProjectFolders", {}),
+            imageBackground: configuration.get("imageBackground", "transparent"),
+            imageSize: configuration.get("imageSize", 100),
+            lazyLoading: configuration.get("lazyLoading", true),
         };
-        this._pathDeliminator = defaultGet("pathDeliminator", undefined);
-
-        const viewColumn = Number(vscode.ViewColumn[defaultGet("viewColumn", "One")]) ?? vscode.ViewColumn.One;
+        const viewColumn = Number(vscode.ViewColumn[configuration.get("viewColumn", "One")]) ?? vscode.ViewColumn.One;
 
         // Create panel
         const panel = vscode.window.createWebviewPanel("image-browser", "Image Browser", viewColumn,
@@ -74,11 +69,12 @@ export class ImageBrowserPanel {
         this._disposables.length = 0;
     }
 
+    // Return an on the image from it's Uri
     public findImageFromUri(uri: string) {
-        for (const folder of this._results) {
+        for (const folder of this._results.dirs) {
             const image = folder.imgs.find(img => img.uri == uri);
             if (image)
-                return { folder, image };
+                return { projectDir: path.join(this._results.commonBase, folder.base), image };
         }
     }
 
@@ -116,10 +112,6 @@ export class ImageBrowserPanel {
 
         this._results = imageSearchMultipleFolders(enabledProjectFolders, this._config.includeFolders, this._config.excludeFolders, webview);
 
-        // Change path delminator if desired
-        if (this._pathDeliminator && this._pathDeliminator != "Default")
-            overridePathDeliminators(this._results, this._pathDeliminator);
-
         webview.postMessage({ command: protocol.ServerCommand.PostImageData, data: this._results } as protocol.Message);
     }
 
@@ -154,4 +146,43 @@ export class ImageBrowserPanel {
             config.includeProjectFolders = {};
         config.includeProjectFolders = Object.assign({}, ...projectPaths.map((folder) => ({ [folder]: config.includeProjectFolders[folder] ?? true })));
     }
+}
+
+/**
+ * A helper function that returns a unique alphanumeric identifier called a nonce.
+ *
+ * @remarks This function is primarily used to help enforce content security
+ * policies for resources/scripts being executed in a webview context.
+ *
+ * @returns A nonce
+ */
+export function getNonce() {
+    let text = "";
+    const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for (let i = 0; i < 32; i++) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
+}
+
+/**
+ * A helper function which will get the webview URI of a given file or resource.
+ *
+ * @remarks This URI can be used within a webview's HTML as a link to the
+ * given file/resource.
+ *
+ * @param webview A reference to the extension webview
+ * @param extensionUri The URI of the directory containing the extension
+ * @param pathList An array of strings representing the path to a file/resource
+ * @returns A URI pointing to the file/resource
+ */
+export function getUri(webview: vscode.Webview, extensionUri: vscode.Uri, pathList: string[]) {
+    return webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, ...pathList));
+}
+
+/**
+ * get all project workspace folders
+ */
+export function getAllProjectPaths() {
+    return vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders.map(folder => folder.uri.fsPath) : [];
 }
