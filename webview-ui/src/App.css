@@ -18,7 +18,11 @@ main {
     flex: 1;
 }
 
-.toolbar-expand-button.right {
+.toolbar-button {
+    margin-right: 8px;
+}
+
+.toolbar-pm.right {
     margin-left: 4px;
     margin-right: 8px;
 }
@@ -93,6 +97,10 @@ main {
     align-items: center;
     margin-top: 4px;
     word-break: break-all;
+}
+
+.image-name.small {
+    font-size: 0.8em
 }
 
 .checkerboard {

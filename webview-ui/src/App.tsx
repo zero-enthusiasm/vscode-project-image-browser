@@ -88,20 +88,10 @@ const App: Component = () => {
                 setConfig(message.data as protocol.Configuration);
                 break;
             case protocol.ServerCommand.PostImageData:
-                if (imageGroups().length)
-                    saveState();
                 setImageGroups(processImageData(message.data as protocol.ProjectDirCollection))
                 break;
         }
     };
-
-    const setExpansionState = (key: string, value: boolean) => {
-        const state = vscode.getState(defaultState);
-        if (state.expansions[key] != value && (value == false || state.expansions[key] != undefined)) {
-            state.expansions[key] = value;
-            vscode.setState(state);
-        }
-    }
 
     // Converts the file list sent by the server into the structure we want to display by grouping images based on realtive path
     const processImageData = (ProjectDirs: protocol.ProjectDirCollection) => {
@@ -145,6 +135,24 @@ const App: Component = () => {
         return projectDirGroups;
     };
 
+    // Updates a group expansion in vscode's saved state
+    const setExpansionState = (key: string, value: boolean) => {
+        const state = vscode.getState(defaultState);
+        if (state.expansions[key] != value && (value == false || state.expansions[key] != undefined)) {
+            state.expansions[key] = value;
+            vscode.setState(state);
+        }
+    }
+
+    // Effect to update the saved state when the filter changes
+    createEffect(() => {
+        const state = vscode.getState(defaultState);
+        if (state.filter != filter()) {
+            state.filter = filter();
+            vscode.setState(state);
+        }
+    });
+
     // Applies a new config sent from the server
     const setConfig = (newConfig: protocol.Configuration) => {
         config = newConfig;
@@ -159,30 +167,16 @@ const App: Component = () => {
         setConfig(newConfig);
     };
 
-    // Update the VSCode state to record group expansions
-    const saveState = () => {
-        const expansions: { [key: string]: boolean } = {}
-        imageGroups().forEach(dir => dir.groups.forEach(group => expansions[dir.title + group.title] = group.expanded()))
-        vscode.setState({
-            filter: filter(),
-            expansions
-        });
-    };
-    createEffect(() => {
-        const state = vscode.getState(defaultState);
-        if (state.filter != filter()) {
-            state.filter = filter();
-            vscode.setState(state);
-        }
-    });
-
     // Set expansion for all groups
     const onExpandAll = (expanded: boolean) => imageGroups().forEach(group => {
         group.setExpanded(expanded);
         group.groups.forEach(group => group.setExpanded(expanded));
     });
 
-    // Backgrounds style for image list
+    // Handler for toolbar image size +/-
+    const onImageSize = (offset: number) => onChangeConfig({ imageSize: Math.max(40, Math.min(imageSize() + offset, 200)) });
+
+    // Background style for image list
     const backgroundStyle = createMemo(() => imageBackground().split(';'));
 
     // Lowest level image group
@@ -190,7 +184,7 @@ const App: Component = () => {
         group={group}
         background={backgroundStyle()}
         imageSize={imageSize() + 'px'}
-        filter={filter()}
+        filter={filter().toLowerCase()}
         loading={config.lazyLoading ? "lazy" : undefined}
         onImageClick={setViewImage}
     />
@@ -205,19 +199,23 @@ const App: Component = () => {
     return (
         <main data-vscode-context={context}>
             <div class="toolbar">
-                <vscode-button class="toolbar-expand-button group-expander" appearance="secondary" onclick={() => onExpandAll(true)}>
-                    +
-                </vscode-button>
-                <vscode-button class="toolbar-expand-button group-expander" appearance="secondary" onclick={() => onExpandAll(false)}>
-                    -
-                </vscode-button>
+                {/* Expand/collapse all */}
+                <vscode-button class="toolbar-pm group-expander" onclick={() => onExpandAll(true)} appearance="secondary">+</vscode-button>
+                <vscode-button class="toolbar-pm group-expander right" onclick={() => onExpandAll(false)} appearance="secondary">-</vscode-button>
+                {/* Filter */}
                 <vscode-text-field class="filter-text" placeholder="Filter" value={filter()} onInput={(e: any) => setFilter(e.target.value)} />
+                {/* Background */}
                 Background:
-                <vscode-button id="toolbar-background-button" appearance="icon" onclick={() => setShowBackgroundColorModal(true)}>
+                <vscode-button class="toolbar-button" appearance="icon" onclick={() => setShowBackgroundColorModal(true)}>
                     <Background background={backgroundStyle()} modifiers="color-button-content" />
                 </vscode-button>
+                {/* Image size */}
+                Image Size:
+                <vscode-button class="toolbar-pm group-expander" onclick={() => onImageSize(10)} appearance="secondary">+</vscode-button>
+                <vscode-button class="toolbar-pm group-expander right" onclick={() => onImageSize(-10)} appearance="secondary">-</vscode-button>
+                {/* Settings */}
                 <div class='toolbar-spacer' />
-                <vscode-button class="settings-button" appearance="secondary" onclick={() => setShowSettingsModal(true)}>
+                <vscode-button class="settings-button" onclick={() => setShowSettingsModal(true)} appearance="secondary">
                     ...
                 </vscode-button>
             </div>
@@ -267,6 +265,9 @@ const App: Component = () => {
                             data-vscode-context={imageDataContext(viewImage()!.uri)}
                         ></img>
                     </Background>
+                    <div class="image-name">
+                        {viewImage()!.name}
+                    </div>
                 </ModalPanel>
             </Show>
         </main >
@@ -311,7 +312,7 @@ type ImageGroupProps = {
 }
 
 const ImageGroup: Component<ImageGroupProps> = (props) => {
-    const filteredImages = createMemo(() => props.filter.length ? props.group.images.filter(image => image.name.includes(props.filter))
+    const filteredImages = createMemo(() => props.filter.length ? props.group.images.filter(image => image.name.toLowerCase().includes(props.filter))
         : props.group.images);
     return (
         <Show when={filteredImages().length > 0}>
@@ -326,7 +327,7 @@ const ImageGroup: Component<ImageGroupProps> = (props) => {
                                 <Background background={props.background} modifiers="" size={props.imageSize}>
                                     <img class="image" src={image.uri} loading={props.loading}></img>
                                 </Background>
-                                <div class="image-name" style={{ width: props.imageSize }}>
+                                <div class="image-name small" style={{ width: props.imageSize }}>
                                     {image.name}
                                 </div>
                             </div>
