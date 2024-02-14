@@ -4,6 +4,8 @@ import { imageSearchMultipleFolders } from '../imageSearch';
 import { EXTENSION_ID } from '../extension';
 import * as path from 'path'
 
+export type ImageUriResult = { projectDir: string, image: protocol.ImageFile }
+
 type MessageHandler = (message: protocol.Message) => void;
 
 /**

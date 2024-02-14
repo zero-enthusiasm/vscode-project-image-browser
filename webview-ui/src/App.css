@@ -18,13 +18,13 @@ main {
     flex: 1;
 }
 
-.toolbar-button {
+.right {
+    margin-left: 4px;
     margin-right: 8px;
 }
 
-.toolbar-pm.right {
+.left {
     margin-left: 4px;
-    margin-right: 8px;
 }
 
 .filter-text {

@@ -206,12 +206,12 @@ const App: Component = () => {
                 <vscode-text-field class="filter-text" placeholder="Filter" value={filter()} onInput={(e: any) => setFilter(e.target.value)} />
                 {/* Background */}
                 Background:
-                <vscode-button class="toolbar-button" appearance="icon" onclick={() => setShowBackgroundColorModal(true)}>
+                <vscode-button id="toolbar-background-button" class="right" appearance="icon" onclick={() => setShowBackgroundColorModal(true)}>
                     <Background background={backgroundStyle()} modifiers="color-button-content" />
                 </vscode-button>
                 {/* Image size */}
                 Image Size:
-                <vscode-button class="toolbar-pm group-expander" onclick={() => onImageSize(10)} appearance="secondary">+</vscode-button>
+                <vscode-button class="toolbar-pm group-expander left" onclick={() => onImageSize(10)} appearance="secondary">+</vscode-button>
                 <vscode-button class="toolbar-pm group-expander right" onclick={() => onImageSize(-10)} appearance="secondary">-</vscode-button>
                 {/* Settings */}
                 <div class='toolbar-spacer' />

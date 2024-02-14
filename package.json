@@ -1,111 +1,124 @@
 {
-    "name": "vscode-project-image-browser",
-    "displayName": "vscode-project-image-browser",
+    "name": "project-image-browser",
+    "displayName": "Project Image Browser",
     "description": "An extension for browsing all the images in your current project with directory grouping, filtering and other options.",
     "publisher": "jrthomas",
     "repository": {
         "type": "git",
         "url": "https://github.com/zero-enthusiasm/vscode-project-image-browser.git"
     },
-    "version": "0.0.1",
+    "license": "MIT",
+    "version": "1.0.0",
+    "categories": [
+        "Other"
+    ],
+    "keywords": [
+        "image",
+        "viewer",
+        "browser",
+        "svg",
+        "png"
+    ],
     "engines": {
-        "vscode": "^1.51.0"
+        "vscode": "^1.72.2"
     },
     "main": "./out/extension.js",
     "contributes": {
         "commands": [
             {
-                "command": "vscode-project-image-browser.ViewImages",
+                "command": "project-image-browser.ViewImages",
                 "title": "View Project Images"
             },
             {
-                "command": "vscode-project-image-browser.CopyName",
+                "command": "project-image-browser.CopyName",
                 "title": "Copy Name"
             },
             {
-                "command": "vscode-project-image-browser.CopyRelativePath",
+                "command": "project-image-browser.CopyRelativePath",
                 "title": "Copy Relative Path"
             },
             {
-                "command": "vscode-project-image-browser.CopyFullPath",
+                "command": "project-image-browser.CopyFullPath",
                 "title": "Copy Full Path"
             },
             {
-                "command": "vscode-project-image-browser.OpenImageFile",
+                "command": "project-image-browser.OpenImageFile",
                 "title": "Open in Default App"
+            },
+            {
+                "command": "project-image-browser.OpenImageLocation",
+                "title": "Open File Location"
             }
         ],
         "menus": {
-            "editor/context": [
-                {
-                    "when": "editorFocus",
-                    "command": "vscode-project-image-browser.ViewImages",
-                    "group": "z_commands"
-                }
-            ],
             "explorer/context": [
                 {
-                    "command": "vscode-project-image-browser.ViewImages",
+                    "command": "project-image-browser.ViewImages",
                     "group": "z_commands"
                 }
             ],
             "webview/context": [
                 {
-                    "command": "vscode-project-image-browser.CopyName",
+                    "command": "project-image-browser.CopyName",
                     "when": "webviewId == 'image-browser' && webviewSection == 'image'",
                     "group": "copy@1"
                 },
                 {
-                    "command": "vscode-project-image-browser.CopyRelativePath",
+                    "command": "project-image-browser.CopyRelativePath",
                     "when": "webviewId == 'image-browser' && webviewSection == 'image'",
                     "group": "copy@2"
                 },
                 {
-                    "command": "vscode-project-image-browser.CopyFullPath",
+                    "command": "project-image-browser.CopyFullPath",
                     "when": "webviewId == 'image-browser' && webviewSection == 'image'",
                     "group": "copy@3"
                 },
                 {
-                    "command": "vscode-project-image-browser.OpenImageFile",
+                    "command": "project-image-browser.OpenImageFile",
                     "when": "webviewId == 'image-browser' && webviewSection == 'image'",
                     "group": "open@1"
+                },
+                {
+                    "command": "project-image-browser.OpenImageLocation",
+                    "when": "webviewId == 'image-browser' && webviewSection == 'image'",
+                    "group": "open@2"
                 }
             ]
         },
         "configuration": {
             "title": "Project Image Browser",
             "properties": {
-                "vscode-project-image-browser.includeFolders": {
+                "project-image-browser.includeFolders": {
                     "default": "",
                     "type": "string",
-                    "description": "Only these folders will be searched. Wildcards NOT supported."
+                    "description": "Within workspace folders only this path will be searched. For example: '\\img\\icons;\\backgrounds'"
                 },
-                "vscode-project-image-browser.includeProjectFolders": {
-                    "default": {},
-                    "type": "object",
-                    "description": "Folders that will be included in the search. Must be relative to a project folder. ; deliminated list."
-                },
-                "vscode-project-image-browser.excludeFolders": {
+                "project-image-browser.excludeFolders": {
                     "default": "node_modules",
                     "type": "string",
                     "description": "Folders that will be ignored when found at the end of a path."
                 },
-                "vscode-project-image-browser.imageBackground": {
+                "project-image-browser.includeProjectFolders": {
+                    "default": {},
+                    "type": "object",
+                    "description": "Folders that will be included in the search. Must be relative to a project folder. ; deliminated list."
+                },
+                "project-image-browser.imageBackground": {
                     "default": "transparent",
                     "type": "string",
-                    "description": "Color/pattern displayed behind images."
+                    "description": "Color/pattern displayed behind images. Can be any CSS color but it's advisable to set it using the webview UI."
                 },
-                "vscode-project-image-browser.imageSize": {
+                "project-image-browser.imageSize": {
                     "default": 100,
                     "type": "number",
                     "description": "Size of each image in the browser, in pixels."
                 },
-                "vscode-project-image-browser.lazyLoading": {
+                "project-image-browser.lazyLoading": {
                     "default": true,
                     "type": "boolean",
-                    "description": "Only load images when scrolled into view."
+                    "description": "Only load images when scrolled into view. This makes the page open faster with large collections."
                 },
-                "vscode-project-image-browser.viewColumn": {
+                "project-image-browser.viewColumn": {
                     "default": "One",
                     "type": "string",
                     "enum": [
@@ -123,7 +136,7 @@
                     ],
                     "description": "The column of the editor in which to open the browser."
                 },
-                "vscode-project-image-browser.pathDeliminator": {
+                "project-image-browser.pathDeliminator": {
                     "default": "Default",
                     "type": "string",
                     "enum": [
@@ -131,7 +144,7 @@
                         "/",
                         "\\"
                     ],
-                    "description": "The path deliminator used when displaying and copying paths to clipboard."
+                    "description": "Override path deliminator used when and copying paths to clipboard."
                 }
             }
         }
@@ -153,6 +166,6 @@
         "open": "0.0.5"
     },
     "activationEvents": [
-        "onCommand:vscode-project-image-browser.viewImages"
+        "onCommand:project-image-browser.viewImages"
     ]
 }

@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import * as path from 'path'
-import { execFile } from 'child_process';
+import { exec, execFile } from 'child_process';
 import * as os from 'os';
 
 /**
@@ -58,3 +58,19 @@ export function openInApp(path: string) {
         throw new Error(`Unsupported platform, could not open "${path}"`);
     }
 };
+
+
+export function openFileLocation(path: string) {
+    if (process.platform === 'win32' || (process.platform === 'linux' && os.release().toLowerCase().includes('windows'))) {
+        exec('explorer ' + path.replace(/[&^]/g, '^$&'));
+    }
+    else if (process.platform === 'linux') {
+        // todo
+    }
+    else if (process.platform === 'darwin') {
+        exec(`open path`)
+    }
+    else {
+        throw new Error(`Unsupported platform, could not open "${path}"`);
+    }
+}

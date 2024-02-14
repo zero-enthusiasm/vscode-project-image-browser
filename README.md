@@ -1,35 +1,39 @@
 # Project Image Browser
 
-This is a VSCode extension that allows you to view all of the images in your project collated into a single webview. The webview can be opened using a context menu in explorer pane.
+View all of the images in your project collated into a single webview. The webview can be opened using a context menu in explorer pane.
 
 Inspired by [Image Viewer](https://github.com/ZhangJian1713/vscode-image-viewer) but entirely rewritten to simplify the implementation of new features and allow VSCode theming of the webview.
 
-Features:
+## Features
+
 - Support for workspaces with multiple root folders, including selectively including/excluding them.
 - Webview matches VSCode theming
-- Multiple backgrounds available for images, including checkboards. More added on request.
+- Path copying, file opening via context menu
+- Multiple backgrounds for images, including checkboards. More added on request.
 - Image name filtering
 - Basic include/exclude filters (regex filtering tbd)
+- Most commonly used settings easily accessible in the webview UI
 
-Most, but not quite all, configuration can be altered from within the webview. 
+[![A screenshot of the browser.](./assets/extension-overview-thumb.png)](./assets/extension-overview.png)
 
-![A screenshot of the sample extension.](./assets/extension-overview.png)
+## Commands
 
-## Development
+- `project-image-browser.ViewImages`: Open the image browser
 
-The code is based on the [Hello World](https://github.com/microsoft/vscode-webview-ui-toolkit-samples/tree/main/default/hello-world) sample extension that demonstrates how to set up and use a [SolidJS](https://www.solidjs.com/) + [Webview UI Toolkit](https://github.com/microsoft/vscode-webview-ui-toolkit) webview extension.
+## Settings
 
-Once you've pulled the repo you need to install dependencies.
-```bash
-# Navigate to project folder
+- `project-image-browser.includeFolders`: Within workspace folders only this path will be searched. For example: '\\img\\icons;\\backgrounds'.
 
-# Install dependencies for both the extension and webview UI source code
-npm run install:all
+- `project-image-browser.excludeFolders`: Folders that will be ignored when found at the end of a path. For example 'node_modules' would ignore '\\frontend\\node_modules'.
 
-# Build webview UI source code
-npm run build:webview
+- `project-image-browser.imageBackground`: Color/pattern displayed behind images. Can be any CSS color but it's advisable to set it using the webview UI.
 
-# Open project in VS Code
-code .
-```
-Note that when you change the webview you must rebuild it using the NPM script (bottom of explorer window) or the command above.
+- `project-image-browser.imageSize`: Size of image preview in pixels. Can be adjusted in the UI
+
+- `project-image-browser.lazyLoading`: Only load images when scrolled into view. This makes the page open faster with large collections.
+
+- `project-image-browser.viewColumn`: The column of the editor in which to open the browser.
+
+- `project-image-browser.pathDeliminator`: The path deliminator used when displaying and copying paths to clipboard.
+
+- `project-image-browser.includeProjectFolders`: Determines which workspace folders will be searched. For multi-folder workspaces only and should only be configured using the UI.
